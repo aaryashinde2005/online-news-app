@@ -14,7 +14,8 @@ st.title("📰 Online News Popularity Prediction App")
 # Load the dataset
 @st.cache_data
 def load_data():
-    df = pd.read_csv('C:\\Users\\aarya\\OneDrive\\Desktop\\onlinenewspopularity\\OnlineNewsPopularity.csv')
+    df = pd.read_csv('OnlineNewsPopularity.csv')
+
 
     df.columns = df.columns.str.strip()
     df.drop(['url', 'timedelta'], axis=1, inplace=True)
