@@ -61,3 +61,34 @@ sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=["Not Popular", "
 plt.xlabel("Predicted")
 plt.ylabel("Actual")
 st.pyplot(fig)
+# =============================
+# 🎯 Prediction on User Input
+# =============================
+st.subheader("🧠 Predict News Popularity from Your Input")
+
+# Get feature names from training data
+feature_names = list(X.columns)
+user_input = {}
+
+# Take user input for all features used in model
+for feature in feature_names:
+    if df[feature].dtype == 'float64':
+        user_input[feature] = st.number_input(f"Enter {feature}", value=float(df[feature].mean()))
+    else:
+        user_input[feature] = st.number_input(f"Enter {feature}", value=int(df[feature].mean()))
+
+# Convert to DataFrame
+input_df = pd.DataFrame([user_input])
+
+# Scale the input using the same scaler
+input_scaled = scaler.transform(input_df)
+
+# Predict using trained model
+if st.button("🔍 Predict"):
+    prediction = model.predict(input_scaled)
+    prediction_prob = model.predict_proba(input_scaled)[0][1]
+
+    if prediction[0] == 1:
+        st.success(f"✅ This article is likely to be POPULAR! (Confidence: {prediction_prob:.2f})")
+    else:
+        st.warning(f"❌ This article is likely to be NOT popular. (Confidence: {prediction_prob:.2f})")
