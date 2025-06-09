@@ -32,7 +32,9 @@ st.subheader("🧮 Popular vs Not Popular Distribution")
 st.bar_chart(df['popular'].value_counts())
 
 # Split features/labels
-X = df.drop('popular', axis=1)
+selected_features = ['n_tokens_title', 'num_imgs', 'num_videos', 'num_keywords']
+X = df[selected_features]
+
 y = df['popular']
 
 # Train/test split
@@ -61,34 +63,39 @@ sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=["Not Popular", "
 plt.xlabel("Predicted")
 plt.ylabel("Actual")
 st.pyplot(fig)
-# =============================
-# 🎯 Prediction on User Input
-# =============================
+# -------------------------------
+# ✅ Predict News Popularity Section
+# -------------------------------
 st.subheader("🧠 Predict News Popularity from Your Input")
+st.markdown("Enter values for each feature below:")
 
-# Get feature names from training data
-feature_names = list(X.columns)
+# Dynamically generate input fields for all model features
 user_input = {}
+for feature in X.columns:
+    col_data = df[feature]
+    min_val = float(col_data.min())
+    max_val = float(col_data.max())
+    mean_val = float(col_data.mean())
 
-# Take user input for all features used in model
-for feature in feature_names:
-    if df[feature].dtype == 'float64':
-        user_input[feature] = st.number_input(f"Enter {feature}", value=float(df[feature].mean()))
+    # Use slider for better user experience
+    if col_data.dtype == 'float64':
+        user_input[feature] = st.slider(f"{feature}", min_value=min_val, max_value=max_val, value=mean_val)
     else:
-        user_input[feature] = st.number_input(f"Enter {feature}", value=int(df[feature].mean()))
+        user_input[feature] = st.slider(f"{feature}", min_value=int(min_val), max_value=int(max_val), value=int(mean_val))
 
-# Convert to DataFrame
+# Convert input to DataFrame
 input_df = pd.DataFrame([user_input])
 
-# Scale the input using the same scaler
-input_scaled = scaler.transform(input_df)
-
-# Predict using trained model
+# Predict when button is clicked
 if st.button("🔍 Predict"):
-    prediction = model.predict(input_scaled)
-    prediction_prob = model.predict_proba(input_scaled)[0][1]
+    try:
+        input_scaled = scaler.transform(input_df)
+        prediction = model.predict(input_scaled)
+        prob = model.predict_proba(input_scaled)[0][1]
 
-    if prediction[0] == 1:
-        st.success(f"✅ This article is likely to be POPULAR! (Confidence: {prediction_prob:.2f})")
-    else:
-        st.warning(f"❌ This article is likely to be NOT popular. (Confidence: {prediction_prob:.2f})")
+        if prediction[0] == 1:
+            st.success(f"✅ Your article is likely to be POPULAR! (Confidence: {prob:.2%})")
+        else:
+            st.warning(f"❌ Your article is likely NOT popular. (Confidence: {(1 - prob):.2%})")
+    except Exception as e:
+        st.error(f"❌ An error occurred during prediction: {str(e)}")
